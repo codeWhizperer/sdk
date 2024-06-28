@@ -1,4 +1,5 @@
 "use client";
+
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { TokenboundClient, WalletClient, Call } from "starknet-tokenbound-sdk";
 import {
@@ -20,6 +21,7 @@ function App() {
   const [owner, setOwner] = useState("");
   const [nft, setNft] = useState("");
   const [isLocked, setIsLocked] = useState(false);
+  
 
   const options = {
     account: account,
