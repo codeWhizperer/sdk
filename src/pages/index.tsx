@@ -1,118 +1,242 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+"use client";
+import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { TokenboundClient, WalletClient, Call } from "starknet-tokenbound-sdk";
+import {
+  IMPLEMENTATION_HASH,
+  JSON_RPC,
+  REGISTRY_ADDRESS,
+  TOKEN_CONTRACT,
+  TOKEN_ID,
+} from "./constants";
+import { useState } from "react";
+import { num } from "starknet";
 
-const inter = Inter({ subsets: ["latin"] });
+function App() {
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { isConnected, address, account } = useAccount();
+  const [tba, setTba] = useState<string>("");
+  const [status, setStatus] = useState<boolean>(false);
+  const [owner, setOwner] = useState("");
+  const [nft, setNft] = useState("");
+  const [isLocked, setIsLocked] = useState(false);
 
-export default function Home() {
+  const options = {
+    account: account,
+    registryAddress: REGISTRY_ADDRESS,
+    implementationAddress: IMPLEMENTATION_HASH,
+    jsonRPC: JSON_RPC,
+  };
+
+  let tokenboundClient: any;
+
+  if (account) {
+    tokenboundClient = new TokenboundClient(options);
+  }
+
+  // Get Account
+
+  const getAccount = async () => {
+    try {
+      const account = await tokenboundClient?.getAccount({
+        tokenContract: TOKEN_CONTRACT,
+        tokenId: TOKEN_ID,
+      });
+      setTba(num.toHex(account));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Get Deployment Status
+  const deployAccount = async () => {
+    try {
+      await tokenboundClient?.createAccount({
+        tokenContract: TOKEN_CONTRACT,
+        tokenId: TOKEN_ID,
+        salt: 4005,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const GetDeploymentStatus = async () => {
+    try {
+      const status = await tokenboundClient?.checkAccountDeployment({
+        tokenContract: TOKEN_CONTRACT,
+        tokenId: TOKEN_ID,
+      });
+      setStatus(status?.deployed);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // get account owner(breaks the code)
+  const getAccountOwner = async () => {
+    const nftowner = await tokenboundClient?.getOwner({
+      tbaAddress: tba,
+      tokenContract:  TOKEN_CONTRACT,
+      tokenId: TOKEN_ID,
+    })
+    setOwner(num.toHex(nftowner))
+  }
+
+
+  const getNFT = async () => {
+    try {
+      const nftowner = await tokenboundClient.getOwnerNFT(tba);
+      setNft(num.toHex(nftowner[0]));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getLockStatus = async () => {
+    try {
+      const lockStatus = await tokenboundClient.is_locked(tba as string)
+     setIsLocked(lockStatus[0])
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const Lock = async () => {
+    try {
+      await tokenboundClient.lock({ tbaAddress: tba, duration_in_sec: 300 });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (account) {
+    GetDeploymentStatus();
+    getAccount();
+    getLockStatus()
+  }
+
+  if (status){
+    // getAccountOwner();
+    getNFT();
+  }
+
+  const transferToken = async() =>{
+    try {
+      await tokenboundClient?.transferERC20({
+        tbaAddress: tba,
+        contractAddress: `0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d`,
+        recipient: "0x010f7970496Dc785b89fb692cD80a2d8591ee6C2616C0C331Ae9Cf36D77CC135",
+        amount: "400000000000000000"
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  // execute
+  const execute = async () => {
+    const call1: Call = {
+      to: "0x077e0925380d1529772ee99caefa8cd7a7017a823ec3db7c003e56ad2e85e300",
+      selector:
+        "0x7a44dde9fea32737a5cf3f9683b3235138654aa2d189f6fe44af37a61dc60d",
+      calldata: [],
+    };
+    const call2: Call = {
+      to: "0x077e0925380d1529772ee99caefa8cd7a7017a823ec3db7c003e56ad2e85e300",
+      selector:
+        "0x03a0b04fad2d45d81641f40c55ee13e701dacd4a99cbf4d6ed1e231d717b3e4e",
+      calldata: [],
+    };
+    try {
+      await tokenboundClient.execute(tba as string, [call1, call2]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div>
+      <header className="flex justify-between p-2">
+        <div className="">
+          <h1 className="text-2xl">
+            {" "}
+            SDK<a href="#">EXAMPLE </a>
+          </h1>
         </div>
-      </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+        {isConnected ? (
+          <button
+            onClick={() => disconnect()}
+            className="bg-gray-400 p-2 rounded-lg"
+            type="button"
+          >
+            Disconnect
+          </button>
+        ) : (
+          <div className="flex justify-between ">
+            {connectors.map((connector) => (
+              <div className="mr-2" key={connector.id}>
+                <button onClick={() => connect({ connector })}>
+                  {connector.name}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </header>
+      <main>
+        <div>
+          <p>Tba Account: {tba}</p>
+          <p className="text-red-500">Status Account: {String(status)}</p>
+          <p className="text-red-500">Owner: {owner}</p>
+          <p className="text-red-500">NFT Owner: {nft}</p>
+          <p className="text-red-500">Lock-Status: {String(isLocked)}</p>
+        </div>
+        <div className="flex space-x-4">
+        <div className="my-2">
+          <button
+            disabled={status}
+            className="bg-green-300 rounded-lg p-2"
+            onClick={deployAccount}
+            type="button"
+          >
+            Deploy TBA
+          </button>
+        </div>
+        <div className="my-2">
+          <button
+            className="bg-red-300 rounded-lg p-2"
+            onClick={execute}
+            type="button"
+          >
+            Execute
+          </button>
+        </div>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        <div className="my-2">
+          <button
+            className="bg-blue-300 rounded-lg p-2"
+            onClick={Lock}
+            type="button"
+          >
+            Lock
+          </button>
+        </div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+        <div className="my-2">
+          <button
+            className="bg-orange-300 rounded-lg p-2"
+            onClick={transferToken}
+            type="button"
+          >
+            Transfer ERC20
+          </button>
+        </div>
+        </div>
+      </main>
+    </div>
   );
 }
+
+export default App;
