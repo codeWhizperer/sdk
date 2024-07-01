@@ -159,35 +159,8 @@ function App() {
 
   return (
     <div>
-      <header className="flex justify-between p-2">
-        <div className="">
-          <h1 className="text-2xl">
-            {" "}
-            SDK<a href="#">EXAMPLE </a>
-          </h1>
-        </div>
 
-        {isConnected ? (
-          <button
-            onClick={() => disconnect()}
-            className="bg-gray-400 p-2 rounded-lg"
-            type="button"
-          >
-            Disconnect
-          </button>
-        ) : (
-          <div className="flex justify-between ">
-            {connectors.map((connector) => (
-              <div className="mr-2" key={connector.id}>
-                <button onClick={() => connect({ connector })}>
-                  {connector.name}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </header>
-      <main>
+      {/* <main>
         <div>
           <p>Tba Account: {tba}</p>
           <p className="text-red-500">Status Account: {String(status)}</p>
@@ -236,7 +209,7 @@ function App() {
           </button>
         </div>
         </div>
-      </main>
+      </main> */}
     </div>
   );
 }
