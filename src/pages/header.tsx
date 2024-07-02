@@ -10,7 +10,7 @@ function Header() {
     <div className="">
       <h1 className="text-2xl">
         {" "}
-        SDK<a href="/">EXAMPLE </a>
+        TBA<a href="/">LAUNCHPAD </a>
       </h1>
     </div>
 
@@ -20,7 +20,6 @@ function Header() {
         <li><a href="/account">Account</a></li>
         <li><a href="/status">Status</a></li>
         <li><a href="/transfer">Transfer</a></li>
-        <li><a href="/lock">Lock</a></li>
       </ul>
     </nav>
 

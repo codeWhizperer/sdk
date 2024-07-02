@@ -1,9 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { useTokenBoundSDK } from "./hook";
 
 function Create() {
-  const { tokenbound } = useTokenBoundSDK();
   const [token_contract_address, set_token_contract_address] =
     useState<string>("");
   const [token_id, set_token_id] = useState<string>("");
@@ -16,25 +14,6 @@ function Create() {
     set_token_id(e.target.value);
   };
   const handleCreateAccount = async () => {
-    if (token_id.trim() === "" || token_contract_address.trim() === "") {
-      alert("Input fields cannot be empty");
-      setLoading(false);
-      return; 
-    }
-    
-    setLoading(true); 
-    try {
-      await tokenbound?.createAccount({
-        tokenContract: token_contract_address,
-        tokenId: token_id,
-      });
-      set_token_contract_address("")
-      set_token_id("")
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false); 
-    }
   };
   
 
@@ -49,6 +28,7 @@ function Create() {
           type="text"
           name="contract_address"
           id="address"
+          value={token_contract_address}
           className="outline-none  rounded-sm w-64 p-1"
           onChange={handleAddressChange}
         />
@@ -61,6 +41,7 @@ function Create() {
           type="text"
           name="token_id"
           id="tokenId"
+          value={token_id}
           className="outline-none  rounded-sm w-64 p-1"
           onChange={handleTokenChange}
         />
